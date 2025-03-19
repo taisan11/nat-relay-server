@@ -9,24 +9,7 @@ import (
 	badger "github.com/dgraph-io/badger/v4"
 )
 
-func receiveTCPConn(ln *net.TCPListener) {
-	for {
-		err := ln.SetDeadline(time.Now().Add(time.Second * 10))
-		if err != nil {
-			log.Fatal(err)
-		}
-		conn, err := ln.AcceptTCP()
-		if err != nil {
-			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
-				continue
-			}
-			log.Fatal(err)
-		}
-		go echoHandler(conn)
-	}
-}
-
-func echoHandler(conn *net.TCPConn) {
+func Handler(conn *net.TCPConn) {
 	defer conn.Close()
 	io.WriteString(conn, "Socket Connection!!\n")
 	for {
@@ -71,5 +54,18 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	receiveTCPConn(ln)
+	for {
+		err := ln.SetDeadline(time.Now().Add(time.Second * 10))
+		if err != nil {
+			log.Fatal(err)
+		}
+		conn, err := ln.AcceptTCP()
+		if err != nil {
+			if netErr, ok := err.(net.Error); ok && netErr.Timeout() {
+				continue
+			}
+			log.Fatal(err)
+		}
+		go Handler(conn)
+	}
 }
